@@ -29,7 +29,9 @@ productapp
 ├── src/main/java/productappDto
 ├── src/main/java/productappService
 ├── src/main/webapp/WEB-INF/views
-├── src/main/resources/application.properties
+├── src/main/webapp/WEB-INF/spring-servlet.xml
+├── src/main/resources/database.properties
+├── src/main/webapp/WEB-INF/web.xml
 ├── pom.xml
 └── README.md
 ```
@@ -46,7 +48,7 @@ productapp
 ### Steps to Run the Project
 
 1. Clone the repository or download the source code.
-2. Configure the MySQL database and update `application.properties`.
+2. Configure the MySQL database and update `database.properties`.
 3. Build the project using Maven:
    ```sh
    mvn clean install
@@ -55,14 +57,85 @@ productapp
 
 ### Database Configuration
 
-Update `application.properties` with your MySQL database credentials:
+Update `database.properties` with your MySQL database credentials:
 
 ```
-spring.datasource.url=jdbc:mysql://localhost:3306/productdb
-spring.datasource.username=root
-spring.datasource.password=root
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
+db.url=jdbc:mysql://localhost:3306/productdb
+db.username=root
+db.password=root
+hibernate.dialect=org.hibernate.dialect.MySQL5Dialect
+hibernate.show_sql=true
+hibernate.hbm2ddl.auto=update
+```
+
+### JSP Pages and Their Paths
+
+| JSP Page            | Path                     | Description |
+|---------------------|-------------------------|-------------|
+| `index.jsp`        | `/WEB-INF/views/index.jsp` | Home page displaying all products. |
+| `addproduct.jsp`   | `/WEB-INF/views/addproduct.jsp` | Form to add a new product. |
+| `display.jsp`      | `/WEB-INF/views/display.jsp` | Displays all available products. |
+| `search.jsp`       | `/WEB-INF/views/search.jsp` | Form to search for a product by ID. |
+| `update.jsp`       | `/WEB-INF/views/update.jsp` | Form to update product details. |
+| `delete.jsp`       | `/WEB-INF/views/delete.jsp` | Confirms and processes product deletion. |
+
+### Spring MVC Configuration
+
+#### `web.xml`
+
+```xml
+<web-app xmlns="http://java.sun.com/xml/ns/javaee"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd"
+         version="3.0">
+    <servlet>
+        <servlet-name>spring</servlet-name>
+        <servlet-class>org.springframework.web.servlet.DispatcherServlet</servlet-class>
+        <init-param>
+            <param-name>contextConfigLocation</param-name>
+            <param-value>/WEB-INF/spring-servlet.xml</param-value>
+        </init-param>
+        <load-on-startup>1</load-on-startup>
+    </servlet>
+
+    <servlet-mapping>
+        <servlet-name>spring</servlet-name>
+        <url-pattern>/</url-pattern>
+    </servlet-mapping>
+</web-app>
+```
+
+#### `spring-servlet.xml`
+
+```xml
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans 
+       http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+    <bean id="viewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="prefix" value="/WEB-INF/views/" />
+        <property name="suffix" value=".jsp" />
+    </bean>
+
+    <bean id="dataSource" class="org.apache.commons.dbcp2.BasicDataSource">
+        <property name="driverClassName" value="com.mysql.cj.jdbc.Driver" />
+        <property name="url" value="${db.url}" />
+        <property name="username" value="${db.username}" />
+        <property name="password" value="${db.password}" />
+    </bean>
+
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+        <property name="dataSource" ref="dataSource" />
+        <property name="hibernateProperties">
+            <props>
+                <prop key="hibernate.dialect">${hibernate.dialect}</prop>
+                <prop key="hibernate.show_sql">${hibernate.show_sql}</prop>
+                <prop key="hibernate.hbm2ddl.auto">${hibernate.hbm2ddl.auto}</prop>
+            </props>
+        </property>
+    </bean>
+</beans>
 ```
 
 ## API Endpoints
@@ -113,3 +186,4 @@ spring.jpa.show-sql=true
     </dependency>
 </dependencies>
 ```
+
